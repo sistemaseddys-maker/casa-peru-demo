@@ -4,7 +4,10 @@
 
 > Repositorio: <https://github.com/sistemaseddys-maker/casa-peru-demo>
 >
-> **Demo en línea:** <https://asistencias-casaperu.onrender.com>
+> **Demo en línea (enlace para el cliente):** <https://asistencias-casaperu.pages.dev>
+>
+> **Enlace alterno:** <https://asistencias-casaperu.onrender.com>
+> (mismo sistema; el enlace de arriba lo publica Cloudflare Pages como proxy hacia Render)
 >
 > **Deploy en 1 clic:** el botón crea el servicio web y la base PostgreSQL gratis
 > en Render usando `render.yaml` (no hay que configurar nada a mano).
