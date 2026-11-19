@@ -18,12 +18,6 @@
         <label>Hasta</label>
         <input type="date" id="dateTo">
       </div>
-      <div class="form-group" style="flex:1;min-width:160px;">
-        <label style="display:flex;align-items:center;gap:.4rem;">Local <span id="regLocalSpinner" style="display:none;" class="spinner"></span></label>
-        <select id="filterLocal" onchange="onLocalChange()">
-          <option value="">Todos</option>
-        </select>
-      </div>
       <div class="form-group" style="flex:2;min-width:200px;">
         <label style="display:flex;align-items:center;gap:.4rem;">Colaborador <span id="regEmpSpinner" style="display:none;" class="spinner"></span></label>
         <select id="filterEmp">
@@ -85,36 +79,14 @@ const today = new Date().toISOString().split('T')[0];
 document.getElementById('dateFrom').value = today;
 document.getElementById('dateTo').value   = today;
 
-// ── CARGA INICIAL: solo locales (lista corta) ──────────────
+// ── CARGA INICIAL: colaboradores (una sola sede) ───────────
 (async () => {
-  const spinner = document.getElementById('regLocalSpinner');
-  const selLoc = document.getElementById('filterLocal');
-  spinner.style.display = 'inline-block';
-  selLoc.disabled = true;
-  try {
-    const r = await fetch('/api/locales/list');
-    const locales = await r.json();
-    locales.forEach(l => {
-      selLoc.innerHTML += `<option value="${l.nombre}">${l.nombre}</option>`;
-    });
-  } catch {} finally {
-    spinner.style.display = 'none';
-    selLoc.disabled = false;
-  }
-})();
-
-// ── AL CAMBIAR LOCAL: recargar empleados filtrados ─────────
-async function onLocalChange() {
-  const local = document.getElementById('filterLocal').value;
   const selEmp = document.getElementById('filterEmp');
   const spinner = document.getElementById('regEmpSpinner');
   spinner.style.display = 'inline-block';
   selEmp.disabled = true;
-  selEmp.innerHTML = '<option value="">Cargando colaboradores...</option>';
-
-  const url = '/api/employees/list' + (local ? '?dept=' + encodeURIComponent(local) : '');
   try {
-    const r = await fetch(url);
+    const r = await fetch('/api/employees/list');
     const emps = await r.json();
     selEmp.innerHTML = '<option value="">Todos</option>';
     emps.forEach(e => {
@@ -126,14 +98,13 @@ async function onLocalChange() {
     spinner.style.display = 'none';
     selEmp.disabled = false;
   }
-}
+})();
 
 // ── BUSCAR: solo al hacer clic ─────────────────────────────
 async function loadRecords() {
   const from    = document.getElementById('dateFrom').value;
   const to      = document.getElementById('dateTo').value;
   const empId   = document.getElementById('filterEmp').value;
-  const localId = document.getElementById('filterLocal').value;
 
   if (!from || !to) { showToast('Selecciona un rango de fechas', 'error'); return; }
 
@@ -166,7 +137,6 @@ async function loadRecords() {
 
   let url = `/api/attendance?from=${from}&to=${to}`;
   if (empId)   url += `&employee_id=${empId}`;
-  if (localId) url += `&local=${encodeURIComponent(localId)}`;
 
   let data = [];
   try {
@@ -229,11 +199,9 @@ function exportCSV() {
   const from    = document.getElementById('dateFrom').value;
   const to      = document.getElementById('dateTo').value;
   const empId   = document.getElementById('filterEmp').value;
-  const localId = document.getElementById('filterLocal').value;
   if (!from || !to) { showToast('Selecciona un rango de fechas', 'error'); return; }
   let url = `/api/export/csv?from=${from}&to=${to}`;
   if (empId)   url += `&employee_id=${empId}`;
-  if (localId) url += `&local=${encodeURIComponent(localId)}`;
   window.location.href = url;
 }
 </script>

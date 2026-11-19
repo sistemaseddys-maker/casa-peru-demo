@@ -13,23 +13,8 @@
     </button>
   </div>
 
-  <!-- Selector de local -->
-  <div class="card" style="margin-bottom:1.5rem;">
-    <div style="display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;">
-      <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;">
-        <label style="display:flex;align-items:center;gap:.5rem;">Selecciona un local para ver sus colaboradores <span id="empLocalSpinner" style="display:none;" class="spinner"></span> <span id="empLocalLoadingText" style="display:none;font-size:.7rem;color:var(--accent);font-family:var(--mono);">CARGANDO...</span></label>
-        <select id="filtroLocal" onchange="onLocalChange()">
-          <option value="">— Elige un local —</option>
-          {% for loc in locales %}
-          <option value="{{ loc.nombre }}">{{ loc.nombre }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tabla (oculta hasta elegir local) -->
-  <div id="seccionTabla" style="display:none;">
+  <!-- Tabla de colaboradores -->
+  <div id="seccionTabla">
     <div class="card">
       <div class="table-wrap">
         <table>
@@ -44,7 +29,7 @@
             </tr>
           </thead>
           <tbody id="empTable">
-            <tr><td colspan="6" class="text-muted" style="text-align:center;padding:2rem;">Selecciona un local para ver colaboradores</td></tr>
+            <tr><td colspan="6" class="text-muted" style="text-align:center;padding:2rem;">Cargando colaboradores…</td></tr>
           </tbody>
         </table>
       </div>
@@ -60,14 +45,7 @@
       <label>Nombre completo</label>
       <input type="text" id="newEmpName" placeholder="Ej: Juan Pérez">
     </div>
-    <div class="form-group mt-2">
-      <label>Local</label>
-      <select id="newEmpDept">
-        {% for loc in locales %}
-        <option value="{{ loc.nombre }}">{{ loc.nombre }}</option>
-        {% endfor %}
-      </select>
-    </div>
+    <input type="hidden" id="newEmpDept" value="{{ local_unico }}">
     <div class="form-group mt-2">
       <label>Cargo</label>
       <select id="newEmpCargo">
@@ -112,14 +90,7 @@
       <label>Nombre completo</label>
       <input type="text" id="editEmpName" placeholder="Ej: Juan Pérez">
     </div>
-    <div class="form-group mt-2">
-      <label>Local</label>
-      <select id="editEmpDept">
-        {% for loc in locales %}
-        <option value="{{ loc.nombre }}">{{ loc.nombre }}</option>
-        {% endfor %}
-      </select>
-    </div>
+    <input type="hidden" id="editEmpDept" value="{{ local_unico }}">
     <div class="form-group mt-2">
       <label>Cargo</label>
       <select id="editEmpCargo">
@@ -159,36 +130,9 @@
 <script>
 let _localActual = '';
 
-// ── SELECTOR DE LOCAL ──────────────────────────────────────
-async function onLocalChange() {
-  const local = document.getElementById('filtroLocal').value;
-  _localActual = local;
-
-  if (!local) {
-    document.getElementById('seccionTabla').style.display = 'none';
-    document.getElementById('btnNuevo').style.display = 'none';
-    return;
-  }
-
-  // Mostrar tabla y botón nuevo
-  document.getElementById('seccionTabla').style.display = 'block';
-  document.getElementById('btnNuevo').style.display = 'inline-flex';
-
-  // Preseleccionar ese local en el modal de nuevo colaborador
-  const selDeptNew = document.getElementById('newEmpDept');
-  for (let o of selDeptNew.options) o.selected = (o.value === local);
-
-  await cargarEmpleados(local);
-}
-
-async function cargarEmpleados(local) {
+// ── CARGA DE COLABORADORES ─────────────────────────────────
+async function cargarEmpleados() {
   const tbody = document.getElementById('empTable');
-  const spinner = document.getElementById('empLocalSpinner');
-  const loadingText = document.getElementById('empLocalLoadingText');
-  const sel = document.getElementById('filtroLocal');
-  spinner.style.display = 'inline-block';
-  loadingText.style.display = 'inline';
-  sel.disabled = true;
   // Skeleton rows con shimmer
   let skeletonRows = '';
   for (let i=0; i<5; i++) {
@@ -203,25 +147,18 @@ async function cargarEmpleados(local) {
   }
   tbody.innerHTML = skeletonRows;
 
-  const url = '/api/employees/list' + (local ? '?dept=' + encodeURIComponent(local) : '');
+  const url = '/api/employees/list';
   let emps = [];
   try {
     const r = await fetch(url);
     emps = await r.json();
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-muted" style="text-align:center;padding:2rem;">Error al cargar colaboradores. Intenta de nuevo.</td></tr>`;
-    spinner.style.display = 'none';
-    loadingText.style.display = 'none';
-    sel.disabled = false;
     return;
-  } finally {
-    spinner.style.display = 'none';
-    loadingText.style.display = 'none';
-    sel.disabled = false;
   }
 
   if (!emps.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-muted" style="text-align:center;padding:2rem;">No hay colaboradores en este local</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-muted" style="text-align:center;padding:2rem;">No hay colaboradores registrados</td></tr>`;
     return;
   }
 
@@ -260,9 +197,6 @@ function openNewModal() {
   document.getElementById('newEmpCargo').selectedIndex = 0;
   document.getElementById('newEnrollStatus').style.display = 'none';
   document.getElementById('newModalActions').style.display = 'flex';
-  // Preseleccionar local activo
-  const selDept = document.getElementById('newEmpDept');
-  for (let o of selDept.options) o.selected = (o.value === _localActual);
   document.getElementById('newEmpOverlay').classList.add('open');
 }
 
@@ -322,8 +256,7 @@ let reEnrollPolling = null;
 function openEditModal(id, name, dept, cargo) {
   document.getElementById('editEmpId').value   = id;
   document.getElementById('editEmpName').value = name;
-  const selDept = document.getElementById('editEmpDept');
-  for (let opt of selDept.options) opt.selected = (opt.value === dept);
+  document.getElementById('editEmpDept').value = dept || {{ local_unico|tojson }};
   const selCargo = document.getElementById('editEmpCargo');
   for (let opt of selCargo.options) opt.selected = (opt.value === cargo);
   document.getElementById('reEnrollStatus').style.display = 'none';
@@ -449,15 +382,6 @@ if (window.APP_DEMO) {
     }
   };
 
-  // En demo, abrir directamente la primera sede para que la tabla no esté vacía
-  setTimeout(() => {
-    const sel = document.getElementById('filtroLocal');
-    if (sel && sel.options.length > 1 && !sel.value) {
-      sel.selectedIndex = 1;
-      onLocalChange();
-    }
-  }, 100);
-
   window.startReEnroll = async function () {
     const id    = document.getElementById('editEmpId').value;
     const name  = document.getElementById('editEmpName').value.trim();
@@ -490,5 +414,9 @@ async function deleteEmp(id, name) {
   const d=await r.json();
   if (d.ok) { document.getElementById('row-'+id)?.remove(); showToast(name+' eliminado'); }
 }
+
+// ── CARGA INICIAL (una sola sede) ──────────────────────────
+document.getElementById('btnNuevo').style.display = 'inline-flex';
+cargarEmpleados();
 </script>
 {% endblock %}

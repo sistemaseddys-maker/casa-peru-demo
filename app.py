@@ -447,28 +447,28 @@ else:
 
 
 # ─── Datos de ejemplo (solo modo demo) ───────────────────────────────────────
-DEMO_SEDES = ["Casa Perú — Lima", "Casa Perú — Arequipa", "Casa Perú — Cusco"]
+DEMO_SEDES = ["Casa Perú"]
 DEMO_CARGOS = ["Administrador", "Chef", "Cocinero", "Ayudante de cocina", "Mesero",
                "Bartender", "Barista", "Cajero", "Supervisor", "Anfitrión"]
 
 DEMO_EMPLEADOS = [
     # (nombre, sede, cargo, tiene_huella)
-    ("María Fernanda Quispe",  "Casa Perú — Lima",     "Administradora",       True),
-    ("Carlos Alberto Rojas",   "Casa Perú — Lima",     "Chef",                 True),
-    ("Lucía Torres Mendoza",   "Casa Perú — Lima",     "Cajera",               True),
-    ("Jorge Luis Huamán",      "Casa Perú — Lima",     "Mesero",               True),
-    ("Ana Paula Chávez",       "Casa Perú — Lima",     "Barista",              True),
-    ("Diego Alonso Paredes",   "Casa Perú — Lima",     "Cocinero",             True),
-    ("Rosa Elena Mamani",      "Casa Perú — Arequipa", "Supervisora",          True),
-    ("Pedro Pablo Ccahuana",   "Casa Perú — Arequipa", "Chef",                 True),
-    ("Valeria Nicole Salas",   "Casa Perú — Arequipa", "Mesera",               True),
-    ("Miguel Ángel Apaza",     "Casa Perú — Arequipa", "Ayudante de cocina",   True),
-    ("Sofía Alejandra Núñez",  "Casa Perú — Arequipa", "Cajera",               False),
-    ("Renzo Fabricio Vargas",  "Casa Perú — Cusco",    "Administrador",        True),
-    ("Camila Isabel Flores",   "Casa Perú — Cusco",    "Anfitriona",           True),
-    ("José Antonio Cárdenas",  "Casa Perú — Cusco",    "Bartender",            True),
-    ("Katherine Ysabel Soto",  "Casa Perú — Cusco",    "Mesera",               False),
-    ("Bruno Sebastián Loayza", "Casa Perú — Cusco",    "Cocinero",             False),
+    ("María Fernanda Quispe",  "Casa Perú", "Administradora",       True),
+    ("Carlos Alberto Rojas",   "Casa Perú", "Chef",                 True),
+    ("Lucía Torres Mendoza",   "Casa Perú", "Cajera",               True),
+    ("Jorge Luis Huamán",      "Casa Perú", "Mesero",               True),
+    ("Ana Paula Chávez",       "Casa Perú", "Barista",              True),
+    ("Diego Alonso Paredes",   "Casa Perú", "Cocinero",             True),
+    ("Rosa Elena Mamani",      "Casa Perú", "Supervisora",          True),
+    ("Pedro Pablo Ccahuana",   "Casa Perú", "Chef",                 True),
+    ("Valeria Nicole Salas",   "Casa Perú", "Mesera",               True),
+    ("Miguel Ángel Apaza",     "Casa Perú", "Ayudante de cocina",   True),
+    ("Sofía Alejandra Núñez",  "Casa Perú", "Cajera",               False),
+    ("Renzo Fabricio Vargas",  "Casa Perú", "Administrador",        True),
+    ("Camila Isabel Flores",   "Casa Perú", "Anfitriona",           True),
+    ("José Antonio Cárdenas",  "Casa Perú", "Bartender",            True),
+    ("Katherine Ysabel Soto",  "Casa Perú", "Mesera",               False),
+    ("Bruno Sebastián Loayza", "Casa Perú", "Cocinero",             False),
 ]
 
 
@@ -565,7 +565,7 @@ if DEMO_MODE:
         "message":        "Lector simulado listo — toca la huella en pantalla",
         "agent_id":       "demo-simulador",
         "agent_name":     "Simulador Casa Perú",
-        "agent_local":    "Todas las sedes",
+        "agent_local":    "Casa Perú",
         "last_heartbeat": time.time(),
     })
 
@@ -697,20 +697,27 @@ def api_verify_code():
     return jsonify({"ok": False, "message": "Contraseña incorrecta"})
 
 
+def local_unico():
+    """Nombre del único local configurado (la demo usa una sola sede)."""
+    row = db_query("SELECT nombre FROM locales ORDER BY id LIMIT 1", fetchone=True)
+    return row["nombre"] if row else (DEMO_SEDES[0] if DEMO_MODE else "")
+
+
 @app.route("/")
 def index():
     locales = db_query("SELECT id, nombre FROM locales ORDER BY nombre", fetchall=True) or []
-    return render_template("index.html", locales=locales)
+    return render_template("index.html", locales=locales, local_unico=local_unico())
 
 @app.route("/empleados")
 def empleados():
     locales = db_query("SELECT id, nombre FROM locales ORDER BY nombre", fetchall=True) or []
     cargos  = db_query("SELECT id, nombre FROM cargos ORDER BY nombre", fetchall=True) or []
-    return render_template("empleados.html", locales=locales, cargos=cargos)
+    return render_template("empleados.html", locales=locales, cargos=cargos,
+                           local_unico=local_unico())
 
 @app.route("/registros")
 def registros():
-    return render_template("registros.html")
+    return render_template("registros.html", local_unico=local_unico())
 
 
 # ─── API web (frontend) ───────────────────────────────────────────────────────

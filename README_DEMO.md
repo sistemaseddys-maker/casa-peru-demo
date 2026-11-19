@@ -26,8 +26,8 @@ y registros) preparada para que **Casa Perú** la pruebe sin instalar nada.
 | **Marcación** | Tocar la huella simulada, elegir colaborador y ver Entrada/Salida en vivo. |
 | **Dedo no registrado** | Botón que muestra el rechazo real del sistema. |
 | **Colaboradores** | Crear colaborador, registrar/actualizar huella (3 capturas simuladas), ver badge "Sin huella". |
-| **Registros** | Historial de marcaciones por fecha, sede y colaborador, con exportación a Excel/CSV. |
-| **Multi-sede** | Lima, Arequipa y Cusco con filtros por sede. |
+| **Registros** | Historial de marcaciones por fecha y colaborador, con exportación a Excel/CSV. |
+| **Una sola sede** | Configurada como "Casa Perú" (Ecuador), sin selectores de local. |
 | **Datos de ejemplo** | 16 colaboradores y ~10 días de marcaciones para que los reportes se vean reales. |
 
 La demo **no pide contraseña** (en producción sí: `/api/verify_code`).
@@ -103,7 +103,7 @@ demo abierta varios días.
 4. **Colaboradores → Registrar huella** → crear "Invitado Casa Perú" y mostrar las
    3 capturas simuladas y el badge verde de huella.
 5. **Colaboradores** → mostrar los badges amarillos "Sin huella".
-6. **Registros** → filtrar por sede y fecha, exportar a Excel.
+6. **Registros** → filtrar por fecha y colaborador, exportar a Excel.
 7. Cerrar con: "Con el lector instalado, estos mismos pasos los hace el colaborador
    solo, sin pedir contraseña".
 
