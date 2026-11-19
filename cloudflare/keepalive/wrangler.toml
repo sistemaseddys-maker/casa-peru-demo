@@ -1,0 +1,8 @@
+# Mantiene despierto el servicio gratuito de Render (se duerme a los 15 min).
+# Cloudflare Workers free permite cron triggers cada 5 minutos.
+name = "casa-peru-keepalive"
+main = "index.js"
+compatibility_date = "2026-01-01"
+
+[triggers]
+crons = ["*/5 * * * *"]
