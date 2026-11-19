@@ -447,28 +447,28 @@ else:
 
 
 # ─── Datos de ejemplo (solo modo demo) ───────────────────────────────────────
-DEMO_SEDES = ["Casa Perú"]
+DEMO_SEDES = ["Planta"]
 DEMO_CARGOS = ["Administrador", "Chef", "Cocinero", "Ayudante de cocina", "Mesero",
                "Bartender", "Barista", "Cajero", "Supervisor", "Anfitrión"]
 
 DEMO_EMPLEADOS = [
     # (nombre, sede, cargo, tiene_huella)
-    ("María Fernanda Quispe",  "Casa Perú", "Administradora",       True),
-    ("Carlos Alberto Rojas",   "Casa Perú", "Chef",                 True),
-    ("Lucía Torres Mendoza",   "Casa Perú", "Cajera",               True),
-    ("Jorge Luis Huamán",      "Casa Perú", "Mesero",               True),
-    ("Ana Paula Chávez",       "Casa Perú", "Barista",              True),
-    ("Diego Alonso Paredes",   "Casa Perú", "Cocinero",             True),
-    ("Rosa Elena Mamani",      "Casa Perú", "Supervisora",          True),
-    ("Pedro Pablo Ccahuana",   "Casa Perú", "Chef",                 True),
-    ("Valeria Nicole Salas",   "Casa Perú", "Mesera",               True),
-    ("Miguel Ángel Apaza",     "Casa Perú", "Ayudante de cocina",   True),
-    ("Sofía Alejandra Núñez",  "Casa Perú", "Cajera",               False),
-    ("Renzo Fabricio Vargas",  "Casa Perú", "Administrador",        True),
-    ("Camila Isabel Flores",   "Casa Perú", "Anfitriona",           True),
-    ("José Antonio Cárdenas",  "Casa Perú", "Bartender",            True),
-    ("Katherine Ysabel Soto",  "Casa Perú", "Mesera",               False),
-    ("Bruno Sebastián Loayza", "Casa Perú", "Cocinero",             False),
+    ("María Fernanda Quispe",  "Planta", "Administradora",       True),
+    ("Carlos Alberto Rojas",   "Planta", "Chef",                 True),
+    ("Lucía Torres Mendoza",   "Planta", "Cajera",               True),
+    ("Jorge Luis Huamán",      "Planta", "Mesero",               True),
+    ("Ana Paula Chávez",       "Planta", "Barista",              True),
+    ("Diego Alonso Paredes",   "Planta", "Cocinero",             True),
+    ("Rosa Elena Mamani",      "Planta", "Supervisora",          True),
+    ("Pedro Pablo Ccahuana",   "Planta", "Chef",                 True),
+    ("Valeria Nicole Salas",   "Planta", "Mesera",               True),
+    ("Miguel Ángel Apaza",     "Planta", "Ayudante de cocina",   True),
+    ("Sofía Alejandra Núñez",  "Planta", "Cajera",               False),
+    ("Renzo Fabricio Vargas",  "Planta", "Administrador",        True),
+    ("Camila Isabel Flores",   "Planta", "Anfitriona",           True),
+    ("José Antonio Cárdenas",  "Planta", "Bartender",            True),
+    ("Katherine Ysabel Soto",  "Planta", "Mesera",               False),
+    ("Bruno Sebastián Loayza", "Planta", "Cocinero",             False),
 ]
 
 
@@ -565,7 +565,7 @@ if DEMO_MODE:
         "message":        "Lector simulado listo — toca la huella en pantalla",
         "agent_id":       "demo-simulador",
         "agent_name":     "Simulador Casa Perú",
-        "agent_local":    "Casa Perú",
+        "agent_local":    "Planta",
         "last_heartbeat": time.time(),
     })
 
