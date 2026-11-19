@@ -650,10 +650,24 @@ def api_demo_config():
 
 @app.route("/api/demo/reset", methods=["POST"])
 def api_demo_reset():
-    """Restaura las marcaciones de ejemplo (útil después de una demostración)."""
+    """Restaura la demo al estado inicial (colaboradores y marcaciones de ejemplo)."""
     if not DEMO_MODE:
         return jsonify({"ok": False, "message": "Solo disponible en modo demo"}), 404
+
+    # Volver exactamente a los datos de ejemplo: se borran también los
+    # colaboradores que se hayan creado durante la demostración.
     db_query("DELETE FROM attendance", commit=True)
+    db_query("DELETE FROM employees", commit=True)
+    try:
+        if USE_POSTGRES:
+            db_query("ALTER SEQUENCE employees_id_seq RESTART WITH 1", commit=True)
+            db_query("ALTER SEQUENCE attendance_id_seq RESTART WITH 1", commit=True)
+        elif not USE_MYSQL:
+            db_query("DELETE FROM sqlite_sequence WHERE name IN ('employees','attendance')",
+                     commit=True)
+    except Exception:
+        pass
+    seed_demo_employees()
     seed_demo_attendance()
     with state_lock:
         scanner_state.update({

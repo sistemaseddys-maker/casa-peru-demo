@@ -404,7 +404,7 @@ window.APP_DEMO    = {{ 'true' if demo_mode else 'false' }};
 window.APP_COMPANY = {{ demo_company|tojson }};
 
 async function demoReset() {
-  if (!confirm('¿Restaurar las marcaciones de ejemplo? Se borrarán las marcaciones creadas durante la demo.')) return;
+  if (!confirm('¿Restaurar la demo a su estado inicial? Se borrarán las marcaciones y los colaboradores creados durante la demostración.')) return;
   try {
     const r = await fetch('/api/demo/reset', {method:'POST'});
     const d = await r.json();
