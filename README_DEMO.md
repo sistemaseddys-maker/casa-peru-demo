@@ -1,5 +1,12 @@
 # Demo — Sistema de Asistencia para Casa Perú
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sistemaseddys-maker/casa-peru-demo)
+
+> Repositorio: <https://github.com/sistemaseddys-maker/casa-peru-demo>
+>
+> **Deploy en 1 clic:** el botón crea el servicio web y la base PostgreSQL gratis
+> en Render usando `render.yaml` (no hay que configurar nada a mano).
+
 Copia de demostración del sistema de asistencia (marcación con huella, colaboradores
 y registros) preparada para que **Casa Perú** la pruebe sin instalar nada.
 
