@@ -518,7 +518,7 @@ async function pwConfirm() {
     });
     const d = await r.json();
     if (d.ok) {
-      sessionStorage.setItem(SESSION_KEY, '1');   // no volver a pedir en esta sesión
+      localStorage.setItem(SESSION_KEY, '1');   // no volver a pedir (persiste entre pestañas y recargas)
       document.getElementById('pwOverlay').classList.remove('open');
       if (_pwResolve) { _pwResolve(); _pwResolve = null; _pwReject = null; }
     } else {
@@ -547,7 +547,7 @@ document.getElementById('pwInput').addEventListener('keydown', e => {
   const current = window.location.pathname;
   const protected_pages = ['/empleados', '/registros'];
   if (protected_pages.includes(current)) {
-    if (sessionStorage.getItem(SESSION_KEY) !== '1') {
+    if (localStorage.getItem(SESSION_KEY) !== '1') {
       // Pedir contraseña al cargar la página
       window.addEventListener('DOMContentLoaded', () => {
         requirePassword('Ingresa la contraseña para ver esta sección.')
