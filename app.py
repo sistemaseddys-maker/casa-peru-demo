@@ -1047,12 +1047,13 @@ def api_manual_punch():
 
     # ── Sesión: termina a las 04:00 AM del día siguiente a la 1ª Entrada ──
     # ── Bloquear marcación < 5 min desde la última del empleado ───────────
+    # En demo no se bloquea: permite mostrar Entrada/Salida seguidas.
     last_in_day = db_query(
         "SELECT id, punch_type, timestamp FROM attendance "
         "WHERE employee_id=%s "
         "ORDER BY id DESC LIMIT 1",
         (emp_id,), fetchone=True)
-    if last_in_day and last_in_day["timestamp"]:
+    if last_in_day and last_in_day["timestamp"] and not DEMO_MODE:
         try:
             last_dt  = datetime.strptime(last_in_day["timestamp"], "%Y-%m-%d %H:%M:%S")
             diff_seg = abs((curr_dt - last_dt).total_seconds())
