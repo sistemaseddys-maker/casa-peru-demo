@@ -166,6 +166,7 @@ async function cargarEmpleados() {
     const badge = emp.has_template
       ? `<span class="badge badge-in">✓ Registrada</span>`
       : `<span class="badge badge-warn">Sin huella</span>`;
+    const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return `
     <tr id="row-${emp.id}">
       <td class="text-mono text-muted" style="font-size:.8rem;">${emp.id}</td>
@@ -176,11 +177,13 @@ async function cargarEmpleados() {
       <td>
         <div class="flex gap-1">
           <button class="btn btn-secondary" style="padding:.3rem .8rem;font-size:.8rem;"
-            onclick="openEditModal(${emp.id}, ${JSON.stringify(emp.name)}, ${JSON.stringify(emp.dept)}, ${JSON.stringify(emp.cargo || '')})">
+            data-id="${emp.id}" data-name="${esc(emp.name)}" data-dept="${esc(emp.dept)}" data-cargo="${esc(emp.cargo || '')}"
+            onclick="openEditModal(this)">
             Editar información
           </button>
           <button class="btn btn-danger" style="padding:.3rem .8rem;font-size:.8rem;"
-            onclick="deleteEmp(${emp.id}, ${JSON.stringify(emp.name)})">
+            data-id="${emp.id}" data-name="${esc(emp.name)}"
+            onclick="deleteEmp(this)">
             Eliminar
           </button>
         </div>
@@ -253,12 +256,12 @@ document.getElementById('newEmpOverlay').addEventListener('click',function(e){ i
 // ── EDITAR INFORMACIÓN ─────────────────────────────────────
 let reEnrollPolling = null;
 
-function openEditModal(id, name, dept, cargo) {
-  document.getElementById('editEmpId').value   = id;
-  document.getElementById('editEmpName').value = name;
-  document.getElementById('editEmpDept').value = dept || {{ local_unico|tojson }};
+function openEditModal(btn) {
+  document.getElementById('editEmpId').value   = btn.dataset.id;
+  document.getElementById('editEmpName').value = btn.dataset.name;
+  document.getElementById('editEmpDept').value = btn.dataset.dept || {{ local_unico|tojson }};
   const selCargo = document.getElementById('editEmpCargo');
-  for (let opt of selCargo.options) opt.selected = (opt.value === cargo);
+  for (let opt of selCargo.options) opt.selected = (opt.value === btn.dataset.cargo);
   document.getElementById('reEnrollStatus').style.display = 'none';
   document.getElementById('btnUpdateHuella').disabled = false;
   document.getElementById('editEmpOverlay').classList.add('open');
@@ -408,7 +411,9 @@ if (window.APP_DEMO) {
 }
 
 // ── ELIMINAR ───────────────────────────────────────────────
-async function deleteEmp(id, name) {
+async function deleteEmp(btn) {
+  const id   = btn.dataset.id;
+  const name = btn.dataset.name;
   if (!confirm('¿Eliminar a '+name+'? Se borrarán todos sus registros de huella.')) return;
   const r=await fetch('/api/employee/delete/'+id,{method:'DELETE'});
   const d=await r.json();
