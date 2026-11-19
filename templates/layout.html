@@ -387,6 +387,9 @@
   <div id="pwBox">
     <h2>🔒 Acceso restringido</h2>
     <p id="pwDesc">Ingresa la contraseña para continuar.</p>
+    <p id="pwHint" style="display:none;font-size:.75rem;color:var(--accent);margin:.25rem 0 .5rem;">
+      Contraseña de demostración: <strong style="font-family:var(--mono);">1234</strong>
+    </p>
     <input type="password" id="pwInput" placeholder="Contraseña" autocomplete="off">
     <div id="pwError"></div>
     <div id="pwActions">
@@ -441,14 +444,15 @@ let _pwResolve = null;
 let _pwReject  = null;
 
 function requirePassword(desc = 'Ingresa la contraseña para continuar.') {
-  // En la demo no hay contraseñas: la empresa invitada debe poder probar todo.
-  if (window.APP_DEMO) return Promise.resolve();
   return new Promise((resolve, reject) => {
     _pwResolve = resolve;
     _pwReject  = reject;
     document.getElementById('pwDesc').textContent  = desc;
     document.getElementById('pwInput').value       = '';
     document.getElementById('pwError').textContent = '';
+    // En demo se muestra la contraseña de prueba
+    const hint = document.getElementById('pwHint');
+    if (hint) hint.style.display = window.APP_DEMO ? 'block' : 'none';
     document.getElementById('pwOverlay').classList.add('open');
     setTimeout(() => document.getElementById('pwInput').focus(), 100);
   });
@@ -470,6 +474,7 @@ async function pwConfirm() {
     });
     const d = await r.json();
     if (d.ok) {
+      sessionStorage.setItem(SESSION_KEY, '1');   // no volver a pedir en esta sesión
       document.getElementById('pwOverlay').classList.remove('open');
       if (_pwResolve) { _pwResolve(); _pwResolve = null; _pwReject = null; }
     } else {
@@ -493,8 +498,8 @@ document.getElementById('pwInput').addEventListener('keydown', e => {
 });
 
 // ── Proteger pestañas Empleados y Registros ────────────────────────────────
+// En demo también se piden: así la empresa ve el control de acceso real.
 (function protectNav() {
-  if (window.APP_DEMO) return;   // la demo es de acceso libre
   const current = window.location.pathname;
   const protected_pages = ['/empleados', '/registros'];
   if (protected_pages.includes(current)) {

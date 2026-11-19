@@ -533,7 +533,17 @@ def seed_demo_attendance(dias=10):
     print(f"  [DEMO] ✓ {creadas} marcaciones de ejemplo creadas")
 
 
+def ensure_demo_password():
+    """En demo la contraseña de administrador es 1234 (se garantiza siempre)."""
+    row = db_query("SELECT id FROM access_codes WHERE code=%s", ("1234",), fetchone=True)
+    if not row:
+        db_query(
+            "INSERT INTO access_codes (code, descripcion) VALUES (%s, %s)",
+            ("1234", "Administrador"), commit=True)
+
+
 def seed_demo():
+    ensure_demo_password()
     creados = seed_demo_employees()
     row = db_query("SELECT COUNT(*) AS cnt FROM attendance", fetchone=True)
     if creados or not row or row["cnt"] == 0:
@@ -669,6 +679,7 @@ def api_demo_reset():
         pass
     seed_demo_employees()
     seed_demo_attendance()
+    ensure_demo_password()
     with state_lock:
         scanner_state.update({
             "status":           "ready",

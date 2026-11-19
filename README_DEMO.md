@@ -33,7 +33,9 @@ y registros) preparada para que **Casa Perú** la pruebe sin instalar nada.
 | **Una sola sede** | Configurada como "Planta" (Ecuador), sin selectores de local. |
 | **Datos de ejemplo** | 16 colaboradores y ~10 días de marcaciones para que los reportes se vean reales. |
 
-La demo **no pide contraseña** (en producción sí: `/api/verify_code`).
+La demo **sí pide la contraseña de administrador** como el sistema real: al marcar
+manualmente y al entrar a Colaboradores/Registros. En demo la contraseña es **1234**
+(se muestra como pista en el propio modal).
 
 ---
 
