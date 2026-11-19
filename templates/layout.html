@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Asistencia{% endblock %} — {{ company_name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0a0e0f;
+    --surface:  #111618;
+    --card:     #161c1e;
+    --border:   #1f2a2d;
+    --accent:   #00e676;
+    --accent2:  #00bcd4;
+    --danger:   #ff4444;
+    --warn:     #ffb300;
+    --text:     #e8f0f2;
+    --muted:    #5a7278;
+    --mono:     'Space Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-brand {
+    font-family: var(--mono);
+    font-size: .85rem;
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-decoration: none;
+    margin-right: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+  .nav-brand span { color: var(--muted); }
+  .nav-links { display: flex; gap: .25rem; flex: 1; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: .875rem;
+    font-weight: 500;
+    padding: .4rem .9rem;
+    border-radius: 6px;
+    transition: all .15s;
+  }
+  .nav-links a:hover { color: var(--text); background: var(--card); }
+  .nav-links a.active { color: var(--accent); background: rgba(0,230,118,.07); }
+  .scanner-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    margin-left: auto;
+    transition: background .3s;
+  }
+  .scanner-dot.online { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 2s infinite; }
+  .scanner-dot.error  { background: var(--danger); }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: .4; }
+  }
+
+  /* LAYOUT */
+  .page { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 {
+    font-family: var(--mono);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -.01em;
+  }
+  .page-header p { color: var(--muted); font-size: .9rem; margin-top: .35rem; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .card-title {
+    font-family: var(--mono);
+    font-size: .75rem;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .55rem 1.2rem;
+    border-radius: 8px;
+    border: none;
+    font-family: var(--sans);
+    font-size: .875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-primary  { background: var(--accent);  color: #000; }
+  .btn-primary:hover  { background: #00ff88; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-secondary:hover { background: #2a3a3e; }
+  .btn-danger   { background: rgba(255,68,68,.15); color: var(--danger); border: 1px solid rgba(255,68,68,.3); }
+  .btn-danger:hover { background: rgba(255,68,68,.25); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* INPUTS */
+  .form-group { display: flex; flex-direction: column; gap: .4rem; }
+  .form-group label { font-size: .8rem; font-weight: 600; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+  .form-group input, .form-group select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .6rem .9rem;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: .9rem;
+    outline: none;
+    transition: border .15s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent2); }
+  /* DATE INPUT - calendario blanco fijo + verde hover (reemplaza icono negro nativo) */
+  .form-group input[type="date"] {
+    color-scheme: dark;
+    position: relative;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4'/%3E%3Cpath d='M8 2v4'/%3E%3Cpath d='M3 10h18'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .65rem center;
+    background-size: 18px;
+    padding-right: 2.4rem;
+  }
+  .form-group input[type="date"]:hover {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2300e676' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4'/%3E%3Cpath d='M8 2v4'/%3E%3Cpath d='M3 10h18'/%3E%3C/svg%3E");
+  }
+  .form-group input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: 0; top: 0;
+    width: 100%; height: 100%;
+    cursor: pointer;
+  }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+  thead th {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: .6rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { transition: background .1s; }
+  tbody tr:hover { background: rgba(255,255,255,.02); }
+  tbody td { padding: .75rem 1rem; border-bottom: 1px solid rgba(31,42,45,.7); }
+
+  /* BADGE */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: .2rem .65rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 600;
+    font-family: var(--mono);
+  }
+  .badge-in  { background: rgba(0,230,118,.12); color: var(--accent); }
+  .badge-out { background: rgba(0,188,212,.12);  color: var(--accent2); }
+  .badge-err { background: rgba(255,68,68,.12);  color: var(--danger); }
+  .badge-warn { background: rgba(255,179,0,.15); color: var(--warn); border: 1px solid rgba(255,179,0,.3); }
+
+  /* SKELETON / SHIMMER */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--border) 25%, #233035 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+    border-radius: 6px;
+  }
+  .skeleton-row { display:flex; gap:.75rem; align-items:center; padding:.75rem 1rem; border-bottom:1px solid rgba(31,42,45,.4); }
+  .skeleton-dot { width:10px;height:10px;border-radius:50%;background:var(--border); }
+  .spinner { width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle; }
+  .btn-loading { opacity:.6; pointer-events:none; }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: .8rem 1.2rem;
+    border-radius: 10px;
+    font-size: .875rem;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all .25s;
+    z-index: 999;
+    max-width: 320px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.error { border-left-color: var(--danger); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+  @media(max-width:768px) { .grid-2,.grid-3 { grid-template-columns: 1fr; } }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 440px;
+    transform: translateY(20px);
+    transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h2 { font-family: var(--mono); font-size: 1rem; margin-bottom: 1.5rem; }
+  .modal .form-group + .form-group { margin-top: 1rem; }
+  .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
+
+  /* UTIL */
+  .text-muted { color: var(--muted); }
+  .text-accent { color: var(--accent); }
+  .text-mono { font-family: var(--mono); }
+  .mt-1 { margin-top: .5rem; }
+  .mt-2 { margin-top: 1rem; }
+  .mt-3 { margin-top: 1.5rem; }
+  .flex { display: flex; align-items: center; }
+  .gap-1 { gap: .5rem; }
+  .gap-2 { gap: 1rem; }
+  .justify-between { justify-content: space-between; }
+
+  /* MODAL CONTRASEÑA */
+  #pwOverlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+  }
+  #pwOverlay.open { opacity: 1; pointer-events: all; }
+  #pwBox {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 380px;
+    transform: translateY(20px);
+    transition: transform .2s;
+  }
+  #pwOverlay.open #pwBox { transform: translateY(0); }
+  #pwBox h2 { font-family: var(--mono); font-size: 1rem; margin-bottom: .5rem; color: var(--text); }
+  #pwBox p  { font-size: .85rem; color: var(--muted); margin-bottom: 1.25rem; }
+  #pwInput {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .65rem 1rem;
+    color: var(--text);
+    font-size: 1rem;
+    font-family: var(--mono);
+    letter-spacing: .15em;
+    outline: none;
+    transition: border .15s;
+    margin-bottom: .75rem;
+  }
+  #pwInput:focus { border-color: var(--accent2); }
+  #pwInput.shake { animation: shake .35s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%,60%  { transform: translateX(-8px); }
+    40%,80%  { transform: translateX(8px); }
+  }
+  #pwError { color: var(--danger); font-size: .8rem; min-height: 1rem; margin-bottom: .75rem; }
+  #pwActions { display: flex; gap: .75rem; justify-content: flex-end; }
+
+  footer.powered {
+    text-align: center;
+    padding: .75rem 1rem;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: .04em;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+
+  /* BANNER MODO DEMO */
+  .demo-banner {
+    background: linear-gradient(90deg, rgba(255,179,0,.14), rgba(255,179,0,.04));
+    border-bottom: 1px solid rgba(255,179,0,.3);
+    padding: .45rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-size: .8rem;
+    color: var(--warn);
+    flex-wrap: wrap;
+  }
+  .demo-banner strong { font-family: var(--mono); letter-spacing: .08em; }
+  .demo-banner .demo-pill {
+    background: var(--warn); color: #000; font-weight: 700;
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .08em;
+    border-radius: 999px; padding: .12rem .55rem;
+  }
+  .demo-banner button {
+    margin-left: auto; background: transparent; border: 1px solid rgba(255,179,0,.45);
+    color: var(--warn); border-radius: 6px; padding: .25rem .7rem;
+    font-size: .75rem; cursor: pointer; font-family: var(--sans);
+  }
+  .demo-banner button:hover { background: rgba(255,179,0,.12); }
+  @media(max-width:640px){ .demo-banner { padding: .45rem 1rem; } .demo-banner button { margin-left: 0; } }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+    ASISTENCIA <span>/ {{ company_name }}</span>
+  </a>
+  <div class="nav-links">
+    <a href="/"          class="{% if request.path == '/' %}active{% endif %}">Marcación</a>
+    <a href="/empleados" class="{% if request.path == '/empleados' %}active{% endif %}">Colaboradores</a>
+    <a href="/registros" class="{% if request.path == '/registros' %}active{% endif %}">Registros</a>
+  </div>
+  <div class="scanner-dot" id="navDot"></div>
+</nav>
+
+{% if demo_mode %}
+<div class="demo-banner">
+  <span class="demo-pill">DEMO</span>
+  <span><strong>{{ demo_company }}</strong> — datos de ejemplo · lector de huella <strong>simulado</strong> (no se necesita hardware)</span>
+  <button onclick="demoReset()">Restaurar datos de ejemplo</button>
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+<!-- ── Modal de contraseña ── -->
+<div id="pwOverlay">
+  <div id="pwBox">
+    <h2>🔒 Acceso restringido</h2>
+    <p id="pwDesc">Ingresa la contraseña para continuar.</p>
+    <input type="password" id="pwInput" placeholder="Contraseña" autocomplete="off">
+    <div id="pwError"></div>
+    <div id="pwActions">
+      <button class="btn btn-secondary" onclick="pwCancel()">Cancelar</button>
+      <button class="btn btn-primary"   onclick="pwConfirm()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Modo demo ──────────────────────────────────────────────────────────────
+window.APP_DEMO    = {{ 'true' if demo_mode else 'false' }};
+window.APP_COMPANY = {{ demo_company|tojson }};
+
+async function demoReset() {
+  if (!confirm('¿Restaurar las marcaciones de ejemplo? Se borrarán las marcaciones creadas durante la demo.')) return;
+  try {
+    const r = await fetch('/api/demo/reset', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) { showToast('Datos de ejemplo restaurados'); setTimeout(()=>location.reload(), 600); }
+    else showToast(d.message || 'No se pudo restaurar', 'error');
+  } catch { showToast('Error de conexión', 'error'); }
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type==='error' ? ' error' : '');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.className = '', 3000);
+}
+
+// Actualizar indicador de lector en nav
+async function updateNavDot() {
+  try {
+    const r = await fetch('/api/scanner/status');
+    const d = await r.json();
+    const dot = document.getElementById('navDot');
+    dot.className = 'scanner-dot' + (d.active ? ' online' : d.status==='error' ? ' error' : '');
+  } catch {}
+}
+// Verificar estado del lector solo al cargar la página (sin polling constante)
+updateNavDot();
+
+// ── Sistema de contraseña ──────────────────────────────────────────────────
+const SESSION_KEY = 'bbq_access_ok';
+
+let _pwResolve = null;
+let _pwReject  = null;
+
+function requirePassword(desc = 'Ingresa la contraseña para continuar.') {
+  // En la demo no hay contraseñas: la empresa invitada debe poder probar todo.
+  if (window.APP_DEMO) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    _pwResolve = resolve;
+    _pwReject  = reject;
+    document.getElementById('pwDesc').textContent  = desc;
+    document.getElementById('pwInput').value       = '';
+    document.getElementById('pwError').textContent = '';
+    document.getElementById('pwOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('pwInput').focus(), 100);
+  });
+}
+
+function pwCancel() {
+  document.getElementById('pwOverlay').classList.remove('open');
+  if (_pwReject) { _pwReject('cancelled'); _pwReject = null; _pwResolve = null; }
+}
+
+async function pwConfirm() {
+  const code = document.getElementById('pwInput').value.trim();
+  if (!code) return;
+  try {
+    const r = await fetch('/api/verify_code', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({code})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('pwOverlay').classList.remove('open');
+      if (_pwResolve) { _pwResolve(); _pwResolve = null; _pwReject = null; }
+    } else {
+      const inp = document.getElementById('pwInput');
+      document.getElementById('pwError').textContent = d.message || 'Contraseña incorrecta';
+      inp.classList.remove('shake');
+      void inp.offsetWidth;
+      inp.classList.add('shake');
+      inp.value = '';
+      inp.focus();
+    }
+  } catch {
+    document.getElementById('pwError').textContent = 'Error de conexión';
+  }
+}
+
+// Enter en el input confirma
+document.getElementById('pwInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') pwConfirm();
+  if (e.key === 'Escape') pwCancel();
+});
+
+// ── Proteger pestañas Empleados y Registros ────────────────────────────────
+(function protectNav() {
+  if (window.APP_DEMO) return;   // la demo es de acceso libre
+  const current = window.location.pathname;
+  const protected_pages = ['/empleados', '/registros'];
+  if (protected_pages.includes(current)) {
+    if (sessionStorage.getItem(SESSION_KEY) !== '1') {
+      // Pedir contraseña al cargar la página
+      window.addEventListener('DOMContentLoaded', () => {
+        requirePassword('Ingresa la contraseña para ver esta sección.')
+          .catch(() => { window.location.href = '/'; });
+      });
+    }
+  }
+})();
+</script>
+{% block scripts %}{% endblock %}
+<footer class="powered">Powered By Luis Barrezueta</footer>
+</body>
+</html>

@@ -1,0 +1,30 @@
+# Blueprint de Render para la DEMO de Casa Perú
+# Un solo worker: el estado del "lector simulado" vive en memoria del proceso.
+services:
+  - type: web
+    name: casa-peru-demo
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 8 --bind 0.0.0.0:$PORT
+    healthCheckPath: /
+    envVars:
+      - key: DEMO_MODE
+        value: "1"
+      - key: DEMO_COMPANY
+        value: Casa Perú
+      - key: AGENT_API_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: casa-peru-db
+          property: connectionString
+
+databases:
+  - name: casa-peru-db
+    plan: free
+    databaseName: casaperu
+    user: casaperu

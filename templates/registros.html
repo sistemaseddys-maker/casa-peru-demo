@@ -1,0 +1,240 @@
+{% extends "layout.html" %}
+{% block title %}Registros{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>Registros de Asistencia</h1>
+    <p>Consulta y exporta el historial de marcaciones</p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+      <div class="form-group" style="flex:1;min-width:160px;">
+        <label>Desde</label>
+        <input type="date" id="dateFrom">
+      </div>
+      <div class="form-group" style="flex:1;min-width:160px;">
+        <label>Hasta</label>
+        <input type="date" id="dateTo">
+      </div>
+      <div class="form-group" style="flex:1;min-width:160px;">
+        <label style="display:flex;align-items:center;gap:.4rem;">Local <span id="regLocalSpinner" style="display:none;" class="spinner"></span></label>
+        <select id="filterLocal" onchange="onLocalChange()">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex:2;min-width:200px;">
+        <label style="display:flex;align-items:center;gap:.4rem;">Colaborador <span id="regEmpSpinner" style="display:none;" class="spinner"></span></label>
+        <select id="filterEmp">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="btnBuscar" onclick="loadRecords()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span id="btnBuscarText">Buscar</span>
+        <span id="btnBuscarSpinner" style="display:none;" class="spinner" style="border-top-color:#000;"></span>
+      </button>
+      <button class="btn btn-secondary" onclick="exportCSV()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Resumen (oculto hasta buscar) -->
+  <div class="grid-3" style="margin-bottom:1.5rem;display:none;" id="summaryCards">
+    <div class="card" style="text-align:center;">
+      <div class="card-title">Total marcaciones</div>
+      <div style="font-family:var(--mono);font-size:2rem;color:var(--accent);" id="totalCount">—</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-title">Entradas</div>
+      <div style="font-family:var(--mono);font-size:2rem;color:var(--accent);" id="entradas">—</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-title">Salidas</div>
+      <div style="font-family:var(--mono);font-size:2rem;color:var(--accent2);" id="salidas">—</div>
+    </div>
+  </div>
+
+  <!-- Tabla (oculta hasta buscar) -->
+  <div class="card" id="tablaCard" style="display:none;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Colaborador</th>
+            <th>Local</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody id="recordsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Fechas default = hoy
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('dateFrom').value = today;
+document.getElementById('dateTo').value   = today;
+
+// ── CARGA INICIAL: solo locales (lista corta) ──────────────
+(async () => {
+  const spinner = document.getElementById('regLocalSpinner');
+  const selLoc = document.getElementById('filterLocal');
+  spinner.style.display = 'inline-block';
+  selLoc.disabled = true;
+  try {
+    const r = await fetch('/api/locales/list');
+    const locales = await r.json();
+    locales.forEach(l => {
+      selLoc.innerHTML += `<option value="${l.nombre}">${l.nombre}</option>`;
+    });
+  } catch {} finally {
+    spinner.style.display = 'none';
+    selLoc.disabled = false;
+  }
+})();
+
+// ── AL CAMBIAR LOCAL: recargar empleados filtrados ─────────
+async function onLocalChange() {
+  const local = document.getElementById('filterLocal').value;
+  const selEmp = document.getElementById('filterEmp');
+  const spinner = document.getElementById('regEmpSpinner');
+  spinner.style.display = 'inline-block';
+  selEmp.disabled = true;
+  selEmp.innerHTML = '<option value="">Cargando colaboradores...</option>';
+
+  const url = '/api/employees/list' + (local ? '?dept=' + encodeURIComponent(local) : '');
+  try {
+    const r = await fetch(url);
+    const emps = await r.json();
+    selEmp.innerHTML = '<option value="">Todos</option>';
+    emps.forEach(e => {
+      selEmp.innerHTML += `<option value="${e.id}">${e.name}</option>`;
+    });
+  } catch {
+    selEmp.innerHTML = '<option value="">Error al cargar</option>';
+  } finally {
+    spinner.style.display = 'none';
+    selEmp.disabled = false;
+  }
+}
+
+// ── BUSCAR: solo al hacer clic ─────────────────────────────
+async function loadRecords() {
+  const from    = document.getElementById('dateFrom').value;
+  const to      = document.getElementById('dateTo').value;
+  const empId   = document.getElementById('filterEmp').value;
+  const localId = document.getElementById('filterLocal').value;
+
+  if (!from || !to) { showToast('Selecciona un rango de fechas', 'error'); return; }
+
+  const tbody = document.getElementById('recordsTable');
+  const btn = document.getElementById('btnBuscar');
+  const btnText = document.getElementById('btnBuscarText');
+  const btnSpinner = document.getElementById('btnBuscarSpinner');
+  btn.disabled = true;
+  btn.classList.add('btn-loading');
+  btnText.textContent = 'Buscando...';
+  btnSpinner.style.display = 'inline-block';
+  // Skeleton para resumen
+  document.getElementById('totalCount').innerHTML = '<span class="skeleton" style="display:inline-block;height:24px;width:40px;"></span>';
+  document.getElementById('entradas').innerHTML = '<span class="skeleton" style="display:inline-block;height:24px;width:30px;"></span>';
+  document.getElementById('salidas').innerHTML = '<span class="skeleton" style="display:inline-block;height:24px;width:30px;"></span>';
+  document.getElementById('summaryCards').style.display = 'grid';
+  document.getElementById('tablaCard').style.display = 'block';
+  // Skeleton rows
+  let skel = '';
+  for (let i=0;i<6;i++) {
+    skel += `<tr>
+      <td><div class="skeleton" style="height:12px;width:80px;"></div></td>
+      <td><div class="skeleton" style="height:12px;width:60px;"></div></td>
+      <td><div class="skeleton" style="height:12px;width:130px;"></div></td>
+      <td><div class="skeleton" style="height:12px;width:90px;"></div></td>
+      <td><div class="skeleton" style="height:18px;width:70px;border-radius:999px;"></div></td>
+    </tr>`;
+  }
+  tbody.innerHTML = skel;
+
+  let url = `/api/attendance?from=${from}&to=${to}`;
+  if (empId)   url += `&employee_id=${empId}`;
+  if (localId) url += `&local=${encodeURIComponent(localId)}`;
+
+  let data = [];
+  try {
+    const r = await fetch(url);
+    data = await r.json();
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-muted" style="text-align:center;padding:2rem;">Error al cargar registros</td></tr>`;
+    document.getElementById('totalCount').textContent = '—';
+    document.getElementById('entradas').textContent = '—';
+    document.getElementById('salidas').textContent = '—';
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    btnText.textContent = 'Buscar';
+    btnSpinner.style.display = 'none';
+    return;
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    btnText.textContent = 'Buscar';
+    btnSpinner.style.display = 'none';
+  }
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-muted" style="text-align:center;padding:2rem;">Sin registros en este período</td></tr>`;
+    document.getElementById('totalCount').textContent = '0';
+    document.getElementById('entradas').textContent   = '0';
+    document.getElementById('salidas').textContent    = '0';
+    return;
+  }
+
+  tbody.innerHTML = data.map(row => {
+    const parts     = row.timestamp ? row.timestamp.split(' ') : ['',''];
+    const dateParts = (parts[0] || '').split('-');
+    const timeParts = (parts[1] || '00:00:00').split(':');
+    const meses = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const mes   = meses[parseInt(dateParts[1])] || '';
+    const date  = `${dateParts[2]} ${mes}. ${dateParts[0]}`;
+    const time  = `${timeParts[0]||'00'}:${timeParts[1]||'00'}:${timeParts[2]||'00'}`;
+    const badge = row.punch_type === 'Entrada'
+      ? `<span class="badge badge-in">Entrada</span>`
+      : `<span class="badge badge-out">Salida</span>`;
+    return `<tr>
+      <td class="text-mono" style="font-size:.82rem;">${date}</td>
+      <td class="text-mono" style="font-size:.82rem;">${time}</td>
+      <td style="font-weight:500;">${row.employee_name}</td>
+      <td class="text-muted">${row.local || row.dept || '—'}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+
+  const ent = data.filter(r => r.punch_type === 'Entrada').length;
+  const sal = data.filter(r => r.punch_type === 'Salida').length;
+  document.getElementById('totalCount').textContent = data.length;
+  document.getElementById('entradas').textContent   = ent;
+  document.getElementById('salidas').textContent    = sal;
+}
+
+// ── EXPORTAR ───────────────────────────────────────────────
+function exportCSV() {
+  const from    = document.getElementById('dateFrom').value;
+  const to      = document.getElementById('dateTo').value;
+  const empId   = document.getElementById('filterEmp').value;
+  const localId = document.getElementById('filterLocal').value;
+  if (!from || !to) { showToast('Selecciona un rango de fechas', 'error'); return; }
+  let url = `/api/export/csv?from=${from}&to=${to}`;
+  if (empId)   url += `&employee_id=${empId}`;
+  if (localId) url += `&local=${encodeURIComponent(localId)}`;
+  window.location.href = url;
+}
+</script>
+{% endblock %}
