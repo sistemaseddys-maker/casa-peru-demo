@@ -482,8 +482,6 @@ async function updateNavDot() {
 updateNavDot();
 
 // ── Sistema de contraseña ──────────────────────────────────────────────────
-const SESSION_KEY = 'bbq_access_ok';
-
 let _pwResolve = null;
 let _pwReject  = null;
 
@@ -518,7 +516,6 @@ async function pwConfirm() {
     });
     const d = await r.json();
     if (d.ok) {
-      localStorage.setItem(SESSION_KEY, '1');   // no volver a pedir (persiste entre pestañas y recargas)
       document.getElementById('pwOverlay').classList.remove('open');
       if (_pwResolve) { _pwResolve(); _pwResolve = null; _pwReject = null; }
     } else {
@@ -542,18 +539,15 @@ document.getElementById('pwInput').addEventListener('keydown', e => {
 });
 
 // ── Proteger pestañas Empleados y Registros ────────────────────────────────
-// En demo también se piden: así la empresa ve el control de acceso real.
+// Siempre se pide la contraseña al cargar la página (sin recordar sesión).
 (function protectNav() {
   const current = window.location.pathname;
   const protected_pages = ['/empleados', '/registros'];
   if (protected_pages.includes(current)) {
-    if (localStorage.getItem(SESSION_KEY) !== '1') {
-      // Pedir contraseña al cargar la página
-      window.addEventListener('DOMContentLoaded', () => {
-        requirePassword('Ingresa la contraseña para ver esta sección.')
-          .catch(() => { window.location.href = '/'; });
-      });
-    }
+    window.addEventListener('DOMContentLoaded', () => {
+      requirePassword('Ingresa la contraseña para ver esta sección.')
+        .catch(() => { window.location.href = '/'; });
+    });
   }
 })();
 </script>
